@@ -74,3 +74,7 @@ table.items th{color:var(--sub);font-weight:500;font-size:13px}
 .wd{display:grid;grid-template-columns:20px 1fr 52px;gap:8px;align-items:center;font-size:14px;margin:6px 0}
 .wd .hbar{margin:0}
 .tip{min-height:20px;margin:8px 0 0}
+/* 앱처럼: 화면 글자·숫자를 누르거나 길게 눌러도 선택(드래그)되지 않게. 입력칸은 그대로 선택 가능 */
+html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img{-webkit-user-drag:none}
