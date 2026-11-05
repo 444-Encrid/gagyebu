@@ -30,4 +30,19 @@ sb.auth.onAuthStateChange((event, session) => {
   if (uid !== last) { last = uid; setTimeout(() => route().catch(() => toast("연결에 실패했습니다")), 0); }
 });
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+// 새 버전이 올라오면 새 서비스 워커가 자리를 잡는 순간 한 번 새로고침해서 새 화면을 쓴다
+if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController && !reloaded) { reloaded = true; location.reload(); }
+  });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+    .then((reg) => {
+      reg.update();
+      // 앱으로 돌아올 때도 새 버전이 있는지 본다
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update();
+      });
+    });
+}
