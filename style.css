@@ -48,3 +48,26 @@ table.items th{color:var(--sub);font-weight:500;font-size:13px}
 .sheet-box{width:100%;max-width:640px;margin:0 auto;background:var(--card);border-radius:18px 18px 0 0;
  padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
 .sheet-box button{padding:16px;font-size:17px}
+/* 통계 */
+.up{color:#e66767}.down{color:#0ca30c}
+.meter,.hbar{height:8px;background:#2a2f37;border-radius:99px;overflow:hidden;margin:6px 0 4px}
+.meter i,.hbar i{display:block;height:100%;border-radius:99px;background:#3987e5}
+.meter i.good{background:#0ca30c}.meter i.warn2{background:#fab219}.meter i.crit{background:#d03b3b}
+.bud{padding:10px 0;border-bottom:1px solid var(--line)}.bud:last-child{border-bottom:0}
+.bud-s{font-size:13px;color:var(--sub)}
+.hb{padding:8px 0;border-bottom:1px solid var(--line)}.hb:last-child{border-bottom:0}
+.cols{display:flex;align-items:flex-end;gap:6px;height:170px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;height:100%}
+.col i{display:block;width:70%;max-width:36px;background:#184f95;border-radius:4px 4px 0 0}
+.col.cur i,.col.on i{background:#3987e5}
+.col .v{font-size:12px;color:var(--text);min-height:18px}
+.col .x{font-size:12px;color:var(--sub);margin-top:4px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cw{text-align:center;font-size:12px;color:var(--sub)}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;
+ border:1px solid var(--line);color:var(--sub);cursor:pointer}
+.cd.has{color:#fff;border-color:transparent}
+.cd.on,.col.on{outline:2px solid var(--text);outline-offset:1px}
+.wd{display:grid;grid-template-columns:20px 1fr 52px;gap:8px;align-items:center;font-size:14px;margin:6px 0}
+.wd .hbar{margin:0}
+.tip{min-height:20px;margin:8px 0 0}

@@ -4,6 +4,7 @@ import { openForm } from "./form.js";
 import { chooseSource } from "./receipts.js";
 import { showSettings } from "./settings.js";
 import { showDetail } from "./detail.js";
+import { showStats } from "./stats.js";
 
 let ym = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7); // YYYY-MM (한국 시간)
 let channel = null;
@@ -46,7 +47,8 @@ export async function showLedger(main) {
   main.innerHTML = `
     <div class="top">
       <div class="month"><button id="pv">‹</button><b>${+y}년 ${+m}월</b><button id="nx">›</button></div>
-      <button id="set" aria-label="설정"><span class="ico">⚙️</span></button>
+      <div class="row" style="flex:0 0 auto"><button id="stats" aria-label="통계"><span class="ico">📊</span> 통계</button>
+      <button id="set" aria-label="설정"><span class="ico">⚙️</span></button></div>
     </div>
     <div class="card">
       <div class="sub">이번 달 쓴 돈</div>
@@ -65,6 +67,7 @@ export async function showLedger(main) {
   main.querySelector("#pv").onclick = () => { shift(-1); again(); };
   main.querySelector("#nx").onclick = () => { shift(1); again(); };
   main.querySelector("#set").onclick = () => showSettings(main, again);
+  main.querySelector("#stats").onclick = () => showStats(main, again);
   main.querySelector("#rc").onclick = () => chooseSource(main, again);
   main.querySelector("#man").onclick = () => openForm(main, null, again);
   main.querySelectorAll(".item").forEach((el) => {
