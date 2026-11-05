@@ -1,5 +1,5 @@
 // 지출 자세히 보기: 항목을 누르면 먼저 이 화면, 원하면 [수정]
-import { sb, state, won, esc } from "./supa.js";
+import { sb, state, won, esc, splitByCategory } from "./supa.js";
 import { openForm } from "./form.js";
 
 const nameOf = (uid) => state.members.find((m) => m.user_id === uid)?.display_name ?? "?";
@@ -18,8 +18,9 @@ function row(label, value) {
 export async function showDetail(main, r, back) {
   const items = r.items ?? [];
   const sum = items.reduce((a, i) => a + (i.amount ?? 0), 0);
-  const itemRows = items.map((i) => `<tr><td>${esc(i.name)}</td><td class="num">${i.qty ?? ""}</td>
-    <td class="num">${won(i.amount)}</td></tr>`).join("");
+  const itemRows = items.map((i) => `<tr><td>${esc(i.name)}<div class="sub" style="font-size:12px">${esc(i.category || r.category)}</div></td>
+    <td class="num">${i.qty ?? ""}</td><td class="num">${won(i.amount)}</td></tr>`).join("");
+  const split = Object.entries(splitByCategory(r)).sort((a, b) => b[1] - a[1]);
   const sumNote = items.length && sum !== r.total
     ? `<p class="warn"><span class="ico">⚠️</span> 품목 합 ${won(sum)} ≠ 금액 ${won(r.total)} (할인·봉투값 등일 수 있음)</p>` : "";
   const created = new Date(r.created_at).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
@@ -32,7 +33,7 @@ export async function showDetail(main, r, back) {
       <div class="sub">${when(r)}</div>
     </div>
     <div class="card">
-      ${row("분류", esc(r.category))}
+      ${row("분류", split.length > 1 ? split.map(([c, v]) => `${esc(c)} ${won(v)}`).join("<br>") : esc(r.category))}
       ${row("결제", esc([r.payment, r.card_company].filter(Boolean).join(" · ")))}
       ${row("넣은 사람", esc(nameOf(r.created_by)))}
       ${row("메모", esc(r.memo))}

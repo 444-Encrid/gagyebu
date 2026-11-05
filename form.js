@@ -24,15 +24,26 @@ export async function openForm(main, row, back, opt = {}) {
         <div><label>결제</label><select id="f_pay"><option value=""></option>${opts(PAYMENTS, r.payment)}</select></div></div>
       <label>카드사</label><input id="f_card" value="${esc(r.card_company)}">
       <label>메모</label><input id="f_memo" value="${esc(r.memo)}">
-      <div id="items" class="sub" style="margin-top:10px"></div>
+      <div id="items" style="margin-top:12px"></div>
     </div>
     <div class="row"><button class="pri" id="sv">저장</button>${row ? '<button class="bad" id="del">지우기</button>' : ""}${b ? '<button id="skip">건너뛰기</button>' : ""}</div>`;
 
-  let items = r.items ?? [];
+  let items = (r.items ?? []).map((i) => ({ ...i, category: i.category || r.category }));
   let path = r.receipt_path ?? opt.path ?? null;
+  // 품목마다 분류를 고를 수 있다. 분류를 바꾸면 대표 분류는 금액이 가장 큰 분류로 맞춘다
   const drawItems = () => {
-    v("items").innerHTML = items.length
-      ? "품목: " + items.map((i) => `${esc(i.name)} ${won(i.amount)}`).join(", ") : "";
+    if (!items.length) { v("items").innerHTML = ""; return; }
+    v("items").innerHTML = `<label>품목별 분류 (${items.length}개)</label>` + items.map((i, k) => `
+      <div class="it"><div class="it-n">${esc(i.name)}<div class="sub">${i.qty ? i.qty + "개 · " : ""}${won(i.amount)}</div></div>
+      <select data-k="${k}">${opts(CATEGORIES, i.category || v("f_cat").value)}</select></div>`).join("");
+    v("items").querySelectorAll("select").forEach((s) => {
+      s.onchange = () => {
+        items[+s.dataset.k].category = s.value;
+        const by = {};
+        for (const i of items) by[i.category || v("f_cat").value] = (by[i.category || v("f_cat").value] ?? 0) + (i.amount ?? 0);
+        v("f_cat").value = Object.entries(by).sort((a, b) => b[1] - a[1])[0][0];
+      };
+    });
   };
   drawItems();
 
@@ -52,7 +63,7 @@ export async function openForm(main, row, back, opt = {}) {
       fill("f_time", d.time); fill("f_store", d.store); fill("f_total", d.total); fill("f_card", d.card_company);
       if (d.category) v("f_cat").value = d.category;
       if (d.payment) v("f_pay").value = d.payment;
-      items = d.items ?? [];
+      items = (d.items ?? []).map((i) => ({ ...i, category: i.category || d.category }));
       drawItems();
       const unclear = (d.unclear ?? []).join(", ");
       v("st").className = unclear ? "warn" : "sub";

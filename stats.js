@@ -1,5 +1,5 @@
 // 통계: 예산, 월별 추이, 분류별 비중, 달력, 요일
-import { sb, state, won, esc, toast, CATEGORIES } from "./supa.js";
+import { sb, state, won, esc, toast, CATEGORIES, splitByCategory } from "./supa.js";
 
 const KST = 9 * 3600e3;
 const ymOf = (d) => d.toISOString().slice(0, 7);
@@ -103,7 +103,7 @@ export async function showStats(main, back) {
   const from = addMonth(ym, -5);
   const to = addMonth(ym, 1);
   const [{ data: rows, error }, { data: bud }] = await Promise.all([
-    sb.from("expenses").select("spent_on,total,category").gte("spent_on", `${from}-01`).lt("spent_on", `${to}-01`),
+    sb.from("expenses").select("spent_on,total,category,items").gte("spent_on", `${from}-01`).lt("spent_on", `${to}-01`),
     sb.from("budgets").select("category,amount"),
   ]);
   if (error) return toast("불러오기 실패");
@@ -122,12 +122,12 @@ export async function showStats(main, back) {
     const i = months.indexOf(m);
     if (i >= 0) sums[i] += r.total;
     if (m === ym) {
-      byCat[r.category] = (byCat[r.category] ?? 0) + r.total;
+      for (const [c, v] of Object.entries(splitByCategory(r))) byCat[c] = (byCat[c] ?? 0) + v;
       const d = +r.spent_on.slice(8);
       byDay[d] = (byDay[d] ?? 0) + r.total;
       byWd[new Date(r.spent_on + "T00:00:00Z").getUTCDay()] += r.total;
     } else if (m === prev && +r.spent_on.slice(8) <= cut) {
-      prevCat[r.category] = (prevCat[r.category] ?? 0) + r.total;
+      for (const [c, v] of Object.entries(splitByCategory(r))) prevCat[c] = (prevCat[c] ?? 0) + v;
       prevSame += r.total;
     }
   }

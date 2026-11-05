@@ -48,6 +48,9 @@ table.items th{color:var(--sub);font-weight:500;font-size:13px}
 .sheet-box{width:100%;max-width:640px;margin:0 auto;background:var(--card);border-radius:18px 18px 0 0;
  padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
 .sheet-box button{padding:16px;font-size:17px}
+.it{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.it-n{flex:1;min-width:0;font-size:15px;word-break:break-all}.it-n .sub{font-size:13px}
+.it select{flex:0 0 44%;padding:8px 10px}
 /* 통계 */
 .up{color:#e66767}.down{color:#0ca30c}
 .meter,.hbar{height:8px;background:#2a2f37;border-radius:99px;overflow:hidden;margin:6px 0 4px}

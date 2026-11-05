@@ -7,9 +7,28 @@ export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 export const CATEGORIES = [
-  "식비", "카페·간식", "마트·생활용품", "교통", "주유", "의료·약국",
+  "식비", "카페·간식", "생활용품", "교통", "주유", "의료·약국",
   "쇼핑", "문화·여가", "통신·공과금", "기타",
 ];
+// 지출 한 건을 분류별 금액으로 나눈다. 품목에 분류가 있으면 품목 금액 비율대로 총액을 나눈다
+// (할인·봉투값처럼 품목 합과 총액의 차이도 비율대로 나눠서 합이 정확히 총액이 되게 한다)
+export function splitByCategory(r) {
+  const items = (r.items ?? []).filter((i) => (i.amount ?? 0) > 0);
+  const base = items.reduce((a, i) => a + i.amount, 0);
+  if (!items.length || base <= 0) return { [r.category]: r.total };
+  const raw = {};
+  for (const i of items) { const c = i.category || r.category; raw[c] = (raw[c] ?? 0) + i.amount; }
+  const out = {};
+  let given = 0, big = null;
+  for (const [c, v] of Object.entries(raw)) {
+    out[c] = Math.floor((v * r.total) / base);
+    given += out[c];
+    if (big === null || v > raw[big]) big = c;
+  }
+  out[big] += r.total - given;
+  return out;
+}
+
 export const PAYMENTS = ["카드", "현금", "간편결제", "기타"];
 
 export const won = (n) => (n ?? 0).toLocaleString("ko-KR") + "원";

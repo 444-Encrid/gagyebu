@@ -1,5 +1,5 @@
 // 메인 화면: 달 선택, 합계, 사람별·분류별 합, 지출 목록
-import { sb, state, won, esc, toast } from "./supa.js";
+import { sb, state, won, esc, toast, splitByCategory } from "./supa.js";
 import { openForm } from "./form.js";
 import { chooseSource } from "./receipts.js";
 import { showSettings } from "./settings.js";
@@ -31,7 +31,7 @@ export async function showLedger(main) {
   const byWho = {}, byCat = {};
   for (const r of rows) {
     byWho[r.created_by] = (byWho[r.created_by] ?? 0) + r.total;
-    byCat[r.category] = (byCat[r.category] ?? 0) + r.total;
+    for (const [c, v] of Object.entries(splitByCategory(r))) byCat[c] = (byCat[c] ?? 0) + v;
   }
   let list = "", day = "";
   for (const r of rows) {
