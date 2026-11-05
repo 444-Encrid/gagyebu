@@ -65,6 +65,11 @@ export async function openForm(main, row, back, opt = {}) {
       if (d.payment) v("f_pay").value = d.payment;
       items = (d.items ?? []).map((i) => ({ ...i, category: i.category || d.category }));
       drawItems();
+      // 대표 분류는 AI 답 대신 품목 금액이 가장 큰 분류로 직접 정한다
+      const by = {};
+      for (const i of items) by[i.category] = (by[i.category] ?? 0) + (i.amount ?? 0);
+      const topCat = Object.entries(by).sort((a, b) => b[1] - a[1])[0];
+      if (topCat && topCat[1] > 0) v("f_cat").value = topCat[0];
       const unclear = (d.unclear ?? []).join(", ");
       v("st").className = unclear ? "warn" : "sub";
       v("st").innerHTML = unclear
