@@ -13,16 +13,17 @@ async function shrink(file) {
   return new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.85));
 }
 
-export function pickPhoto(main, back) {
+// camera=true 면 카메라를 바로 열고, false 면 갤러리(사진 고르기)를 연다
+export function pickPhoto(main, back, camera = true) {
   const inp = document.createElement("input");
   inp.type = "file";
   inp.accept = "image/*";
-  inp.capture = "environment";
+  if (camera) inp.capture = "environment";
   inp.onchange = async () => {
     const file = inp.files?.[0];
     if (!file) return;
     let blob;
-    try { blob = await shrink(file); } catch { return toast("사진을 열 수 없습니다"); }
+    try { blob = await shrink(file); } catch { return toast("이 사진은 열 수 없습니다 (HEIC 같은 형식이면 JPG 로 바꿔 주세요)", 4000); }
     const path = `${state.household.id}/${crypto.randomUUID()}.jpg`;
     const reading = (async () => {
       const up = await sb.storage.from("receipts").upload(path, blob, { contentType: "image/jpeg" });
