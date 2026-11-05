@@ -1,6 +1,7 @@
 // 메인 화면: 달 선택, 합계, 사람별·분류별 합, 지출 목록
 import { sb, state, won, esc, toast } from "./supa.js";
-import { openForm, pickPhoto } from "./form.js";
+import { openForm } from "./form.js";
+import { chooseSource } from "./receipts.js";
 import { showSettings } from "./settings.js";
 import { showDetail } from "./detail.js";
 
@@ -56,17 +57,15 @@ export async function showLedger(main) {
     </div>
     <div class="card list">${list || '<p class="sub center">이 달의 지출이 없습니다</p>'}</div>
     <div class="fab">
-      <button class="pri" id="cam"><span class="ico">📷</span> 찍기</button>
-      <button id="gal"><span class="ico">🖼️</span> 갤러리</button>
-      <button id="man"><span class="ico">✏️</span> 직접</button>
+      <button class="pri" id="rc"><span class="ico">🧾</span> 영수증</button>
+      <button id="man"><span class="ico">✏️</span> 직접 입력</button>
     </div>`;
 
   const again = () => showLedger(main);
   main.querySelector("#pv").onclick = () => { shift(-1); again(); };
   main.querySelector("#nx").onclick = () => { shift(1); again(); };
   main.querySelector("#set").onclick = () => showSettings(main, again);
-  main.querySelector("#cam").onclick = () => pickPhoto(main, again, true);
-  main.querySelector("#gal").onclick = () => pickPhoto(main, again, false);
+  main.querySelector("#rc").onclick = () => chooseSource(main, again);
   main.querySelector("#man").onclick = () => openForm(main, null, again);
   main.querySelectorAll(".item").forEach((el) => {
     el.onclick = () => showDetail(main, rows.find((r) => r.id === el.dataset.id), again);

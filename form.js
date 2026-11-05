@@ -1,53 +1,18 @@
-// 영수증 찍기 → 올리기 → AI 읽기, 그리고 지출 확인·수정 화면
+// 지출 확인·수정 화면 (새로 넣기, 고치기, 영수증 여러 장을 한 장씩 확인하기)
 import { sb, state, CATEGORIES, PAYMENTS, won, esc, today, toast } from "./supa.js";
-
-const MAX_EDGE = 1568;
-
-async function shrink(file) {
-  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const k = Math.min(1, MAX_EDGE / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * k);
-  c.height = Math.round(bmp.height * k);
-  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  return new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.85));
-}
-
-// camera=true 면 카메라를 바로 열고, false 면 갤러리(사진 고르기)를 연다
-export function pickPhoto(main, back, camera = true) {
-  const inp = document.createElement("input");
-  inp.type = "file";
-  inp.accept = "image/*";
-  if (camera) inp.capture = "environment";
-  inp.onchange = async () => {
-    const file = inp.files?.[0];
-    if (!file) return;
-    let blob;
-    try { blob = await shrink(file); } catch { return toast("이 사진은 열 수 없습니다 (HEIC 같은 형식이면 JPG 로 바꿔 주세요)", 4000); }
-    const path = `${state.household.id}/${crypto.randomUUID()}.jpg`;
-    const reading = (async () => {
-      const up = await sb.storage.from("receipts").upload(path, blob, { contentType: "image/jpeg" });
-      if (up.error) throw new Error("사진 올리기 실패");
-      const { data, error } = await sb.functions.invoke("read-receipt", { body: { path } });
-      if (error) {
-        let msg = "AI 읽기 실패";
-        try { msg = (await error.context.json()).error || msg; } catch { /* 기본 문구 */ }
-        throw new Error(msg);
-      }
-      return data.data;
-    })();
-    openForm(main, null, back, { photoUrl: URL.createObjectURL(blob), path, reading });
-  };
-  inp.click();
-}
 
 const v = (id) => document.getElementById(id);
 
+// opt.batch 가 있으면 영수증 한 장씩 확인 모드: 저장 → batch.saved(), 건너뛰기 → batch.skip(), 뒤로 → batch.cancel()
 export async function openForm(main, row, back, opt = {}) {
+  const b = opt.batch;
+  const me = crypto.randomUUID();   // 늦게 끝난 AI 읽기가 다음 장 화면을 채우지 않게
+  main.dataset.form = me;
+  const mine = () => main.dataset.form === me && v("st");
   const r = row ?? { spent_on: today(), category: "기타", items: [] };
   const opts = (arr, cur) => arr.map((x) => `<option ${x === cur ? "selected" : ""}>${x}</option>`).join("");
   main.innerHTML = `
-    <div class="top"><button id="bk">‹ 뒤로</button><b>${row ? "지출 고치기" : "새 지출"}</b><span></span></div>
+    <div class="top"><button id="bk">‹ 뒤로</button><b>${row ? "지출 고치기" : "새 지출"}${b?.label ? ` <span class="sub">${b.label}</span>` : ""}</b><span></span></div>
     <div id="ph"></div>
     <p id="st" class="${opt.reading ? "busy" : "sub"}">${opt.reading ? '<span class="ico">⏳</span> 영수증 읽는 중… (10초 안팎)' : ""}</p>
     <div class="card">
@@ -61,7 +26,7 @@ export async function openForm(main, row, back, opt = {}) {
       <label>메모</label><input id="f_memo" value="${esc(r.memo)}">
       <div id="items" class="sub" style="margin-top:10px"></div>
     </div>
-    <div class="row"><button class="pri" id="sv">저장</button>${row ? '<button class="bad" id="del">지우기</button>' : ""}</div>`;
+    <div class="row"><button class="pri" id="sv">저장</button>${row ? '<button class="bad" id="del">지우기</button>' : ""}${b ? '<button id="skip">건너뛰기</button>' : ""}</div>`;
 
   let items = r.items ?? [];
   let path = r.receipt_path ?? opt.path ?? null;
@@ -80,7 +45,7 @@ export async function openForm(main, row, back, opt = {}) {
 
   if (opt.reading) {
     opt.reading.then((d) => {
-      if (!v("st")) return; // 이미 다른 화면
+      if (!mine()) return; // 이미 다른 화면
       if (!d.is_receipt) { v("st").className = "warn"; v("st").textContent = "영수증이 아닌 것 같습니다. 직접 입력해 주세요."; return; }
       const fill = (id, val) => { if (val != null && val !== "" && !v(id).value) v(id).value = val; };
       if (d.date) v("f_date").value = d.date;
@@ -95,13 +60,14 @@ export async function openForm(main, row, back, opt = {}) {
         ? `<span class="ico">⚠️</span> 확인해 주세요: ${esc(unclear)}`
         : '<span class="ico">✅️</span> 다 읽었습니다. 맞는지 보고 저장하세요.';
     }).catch((e) => {
-      if (!v("st")) return;
+      if (!mine()) return;
       v("st").className = "warn";
       v("st").textContent = e.message.includes("직접 입력") ? e.message : e.message + " 직접 입력해 주세요.";
     });
   }
 
-  v("bk").onclick = back;
+  v("bk").onclick = b ? b.cancel : back;
+  if (b) v("skip").onclick = b.skip;
   v("sv").onclick = async () => {
     const total = parseInt(v("f_total").value.replace(/[^0-9]/g, ""), 10);
     if (!v("f_date").value || Number.isNaN(total)) return toast("날짜와 금액을 넣어 주세요");
@@ -123,7 +89,7 @@ export async function openForm(main, row, back, opt = {}) {
     const { error } = await q;
     if (error) { v("sv").disabled = false; return toast("저장 실패: " + error.message); }
     toast("저장했습니다");
-    back();
+    b ? b.saved() : back();
   };
   if (row) v("del").onclick = async () => {
     if (!confirm("이 지출을 지울까요?")) return;
