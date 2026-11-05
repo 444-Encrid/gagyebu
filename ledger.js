@@ -2,6 +2,7 @@
 import { sb, state, won, esc, toast } from "./supa.js";
 import { openForm, pickPhoto } from "./form.js";
 import { showSettings } from "./settings.js";
+import { showDetail } from "./detail.js";
 
 let ym = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7); // YYYY-MM (한국 시간)
 let channel = null;
@@ -66,7 +67,7 @@ export async function showLedger(main) {
   main.querySelector("#cam").onclick = () => pickPhoto(main, again);
   main.querySelector("#man").onclick = () => openForm(main, null, again);
   main.querySelectorAll(".item").forEach((el) => {
-    el.onclick = () => openForm(main, rows.find((r) => r.id === el.dataset.id), again);
+    el.onclick = () => showDetail(main, rows.find((r) => r.id === el.dataset.id), again);
   });
 
   // 다른 사람이 넣거나 고치면 바로 다시 그린다
